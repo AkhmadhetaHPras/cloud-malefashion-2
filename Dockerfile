@@ -52,5 +52,5 @@ RUN set -eux; \
     docker-php-ext-install gd; \
     php -r 'var_dump(gd_info());'
 
-EXPOSE 9000
+# EXPOSE 9000
 CMD ["php-fpm"]
