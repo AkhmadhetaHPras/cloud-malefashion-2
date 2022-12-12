@@ -53,4 +53,4 @@ RUN set -eux; \
     php -r 'var_dump(gd_info());'
 
 # EXPOSE 9000
-CMD ["php-fpm"]
+# CMD ["php-fpm"]
