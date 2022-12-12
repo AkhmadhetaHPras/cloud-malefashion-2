@@ -87,7 +87,7 @@ RUN set -eux; \
     # Install the PHP pdo_mysql extention
     docker-php-ext-install pdo_mysql; \
     # Install the PHP pdo_pgsql extention
-    docker-php-ext-install pdo_pgsql; \
+    # docker-php-ext-install pdo_pgsql; \
     # Install the PHP gd library
     docker-php-ext-configure gd \
             --prefix=/usr \
