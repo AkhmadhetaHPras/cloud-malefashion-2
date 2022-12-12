@@ -83,15 +83,20 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install extensions
-RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-configure gd \
+RUN set -eux; \
+    # Install the PHP pdo_mysql extention
+    docker-php-ext-install pdo_mysql; \
+    # Install the PHP pdo_pgsql extention
+    docker-php-ext-install pdo_pgsql; \
+    # Install the PHP gd library
+    docker-php-ext-configure gd \
             --prefix=/usr \
             --with-jpeg \
             --with-webp \
             --with-xpm \
             --with-freetype; \
-# RUN docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-png-dir=/usr/include/
-RUN docker-php-ext-install gd
+    docker-php-ext-install gd; \
+    php -r 'var_dump(gd_info());'
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
