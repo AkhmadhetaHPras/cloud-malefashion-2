@@ -32,4 +32,4 @@ env_variables:
   LOG_LEVEL: debug
 
 beta_settings:
-  cloud_sql_instances: "cloud-computing-364304:asia-southeast2:mysqlE"
+  cloud_sql_instances: "cloud-computing-364304:asia-southeast2:mysql"
