@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+
+function show_usage {
+cat <<- _EOF_
+
+Create a new vHost in Debian/Ubuntu Server
+Assumes /etc/apache2/sites-available and /etc/apache2/sites-enabled setup used
+
+    -d    DocumentRoot - i.e. /var/www/yoursite
+    -h    Help - Show this menu.
+    -n    ServerName - i.e. example.com or sub.example.com
+    -a    ServerAlias - i.e. *.example.com or another domain altogether
+    -s    ssl flag : if set to "yes", generate a key/certificate and enables ssl for the vhost
+    -c    Certificate filename. "xip.io" becomes "xip.io.key" and "xip.io.crt".
+          if not set, the server name is used as a cert. name
+    Example Usage.
+    sudo create_vhost -d /var/www/api -n api.dev.local -s yes
+_EOF_
+exit 1
+}
+#
+#   Output vHost skeleton, fill with userinput
+#   To be outputted into new file
+#
+function create_vhost {
+cat <<- _EOF_
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    ServerName $ServerName
+    $ServerAlias
+    DocumentRoot $DocumentRoot
+    <Directory $DocumentRoot>
+        Options +Indexes +FollowSymLinks +MultiViews
+        AllowOverride All
+        Require all granted
+        #<FilesMatch \.php$>
+            # Change this "proxy:unix:/path/to/fpm.socket"
+            # if using a Unix socket
+        #    SetHandler "proxy:fcgi://127.0.0.1:9000"
+        #</FilesMatch>
+    </Directory>
+    ErrorLog \${APACHE_LOG_DIR}/$ServerName-error.log
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+    CustomLog \${APACHE_LOG_DIR}/$ServerName-access.log combined
+</VirtualHost>
+_EOF_
+}
+function create_ssl_vhost {
+cat <<- _EOF_
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerAdmin webmaster@localhost
+    ServerName $ServerName
+    $ServerAlias
+    DocumentRoot $DocumentRoot
+    <Directory $DocumentRoot>
+        Options +Indexes +FollowSymLinks +MultiViews
+        AllowOverride All
+        Require all granted
+        #<FilesMatch \.php$>
+            # Change this "proxy:unix:/path/to/fpm.socket"
+            # if using a Unix socket
+         #   SetHandler "proxy:fcgi://127.0.0.1:9000"
+        #</FilesMatch>
+    </Directory>
+    ErrorLog \${APACHE_LOG_DIR}/$ServerName-error.log
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+    CustomLog \${APACHE_LOG_DIR}/$ServerName-access.log combined
+    SSLEngine on
+    SSLCertificateFile  $CertPath/$CertName.pem
+    SSLCertificateKeyFile $KeyPath/$CertName.key
+    <FilesMatch "\.(cgi|shtml|phtml|php)$">
+        SSLOptions +StdEnvVars
+    </FilesMatch>
+    <Directory /usr/lib/cgi-bin>
+				SSLOptions +StdEnvVars
+	</Directory>
+    BrowserMatch "MSIE [2-6]" \\
+        nokeepalive ssl-unclean-shutdown \\
+        downgrade-1.0 force-response-1.0
+    # MSIE 7 and newer should be able to use keepalive
+    BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+</VirtualHost>
+</IfModule>
+_EOF_
+}
+#Sanity Check - are there two arguments with 2 values?
+if [ "$#" -lt 4 ]; then
+    show_usage
+fi
+CertPath="/etc/ssl/certs"
+KeyPath="/etc/ssl/private"
+#WithSsl="no"
+#Parse flags
+while getopts "d:s:a:n:c:h" OPTION; do
+    case $OPTION in
+        h)
+            show_usage
+            ;;
+        d)
+            DocumentRoot=$OPTARG
+            ;;
+        n)
+            ServerName=$OPTARG
+            ;;
+        a)
+            Alias=$OPTARG
+            ;;
+        s)
+            WithSsl=$OPTARG
+            ;;
+        c)
+            CertName=$OPTARG
+            ;;
+        *)
+            show_usage
+            ;;
+    esac
+done
+# If alias is set:
+if [ "$Alias" != "" ]; then
+    ServerAlias="ServerAlias "$Alias
+else
+    ServerAlias=""
+fi
+# If CertName doesn't get set, set it to ServerName
+if [ "$CertName" == "" ]; then
+    CertName=$ServerName
+fi
+
+if [ ! -d $DocumentRoot ]; then
+    mkdir -p $DocumentRoot
+    #chown USER:USER $DocumentRoot #POSSIBLE IMPLEMENTATION, new flag -u ?
+fi
+
+if [ -z "$WithSsl" ]; then
+    if [ -f "/etc/apache2/sites-enabled/$ServerName.conf" ]; then
+        echo 'vHost already exists. Aborting'
+        show_usage
+    else
+        create_vhost > /etc/apache2/sites-available/${ServerName}.conf
+        cd /etc/apache2/sites-available/ && a2ensite ${ServerName}.conf
+    fi
+else
+    if [ -f "/etc/apache2/sites-enabled/$ServerName-ssl.conf" ]; then
+        echo 'vHost already exists. Aborting'
+        show_usage
+    else
+        create_ssl_vhost >> /etc/apache2/sites-available/${ServerName}-ssl.conf
+    fi
+
+    # Enable Site
+    cd /etc/apache2/sites-available/ && a2ensite ${ServerName}-ssl.conf
+    #service apache2 reload
+fi

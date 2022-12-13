@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+if [ -z "$VHOST_HOSTNAME"  -o -z "$VHOST_DOCROOT" ]; then
+   echo "dont create vhost : hostname or docroot empty"
+#
+#
+else
+    echo "configuring vhost :  create_vhost -d $VHOST_DOCROOT -n $VHOST_HOSTNAME"
+    /usr/local/bin/create_vhost -d  $VHOST_DOCROOT -n $VHOST_HOSTNAME
+#    echo "create cert : openssl req -subj '/CN=$VHOST_HOSTNAME/O=dev. team/C=fr' -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/$VHOST_HOSTNAME.key -out /etc/ssl/certs/$VHOST_HOSTNAME.pem"
+    openssl req -subj "/CN=$VHOST_HOSTNAME/O=dev.team/C=fr" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/$VHOST_HOSTNAME.key -out /etc/ssl/certs/$VHOST_HOSTNAME.pem
+#    echo "create ssl vhost : create_vhost -d $VHOST_DOCROOT -s $VHOST_HOSTNAME"
+    /usr/local/bin/create_vhost -d  $VHOST_DOCROOT -n $VHOST_HOSTNAME -s yes
+
+fi
+
+#echo "start apache foreground"
+#apache2-foreground
