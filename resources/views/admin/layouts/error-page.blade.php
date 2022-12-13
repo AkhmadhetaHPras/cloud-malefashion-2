@@ -4,8 +4,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    
+
     <title>{{ $title }} </title>
 
     <meta name="description" content="" />
@@ -27,7 +28,7 @@
     <link rel="stylesheet" href="{{asset('admin/css/demo.css')}}" />
 
     <!-- Vendors CSS -->
-    <link rel="stylesheet" href="{{asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css')}}" />       
+    <link rel="stylesheet" href="{{asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css')}}" />
     <!-- Page CSS -->
     <!-- Page -->
     <link rel="stylesheet" href="{{asset('admin/vendor/css/pages/page-misc.css')}}" />
@@ -57,13 +58,13 @@
     <script src="{{asset('admin/vendor/js/menu.js')}}"></script>
     <!-- endbuild -->
 
-    <!-- Vendors JS -->    
+    <!-- Vendors JS -->
 
     <!-- Main JS -->
     <script src="{{asset('admin/js/main.js')}}"></script>
 
     <!-- Page JS -->
-    
+
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>

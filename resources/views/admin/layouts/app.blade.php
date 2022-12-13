@@ -4,6 +4,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
     <title>{{ $title }} </title>
@@ -27,10 +28,10 @@
     <link rel="stylesheet" href="{{asset('admin/css/demo.css')}}" />
 
     <!-- Vendors CSS -->
-    <link rel="stylesheet" href="{{asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css')}}" />   
-    <link rel="stylesheet" href="{{asset('admin/vendor/libs/typeahead-js/typeahead.css')}}">    
+    <link rel="stylesheet" href="{{asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css')}}" />
+    <link rel="stylesheet" href="{{asset('admin/vendor/libs/typeahead-js/typeahead.css')}}">
     <link rel="stylesheet" href="{{asset('admin/vendor/libs/flatpickr/flatpickr.css')}}">
-    <link rel="stylesheet" href="{{asset('admin/vendor/libs/typeahead-js/typeahead.css')}}">   
+    <link rel="stylesheet" href="{{asset('admin/vendor/libs/typeahead-js/typeahead.css')}}">
 
     @yield('spesificScript')
 
@@ -91,7 +92,7 @@
                                         <img src="{{asset('storage/'.Auth::user()->photo)}}" alt class="w-px-40 h-auto rounded-circle" />
                                     </div>
                                 </a>
-                                
+
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" href="#">
