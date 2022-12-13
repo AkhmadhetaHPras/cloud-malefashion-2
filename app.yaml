@@ -20,8 +20,16 @@ resources:
 env_variables:
   # Put production environment variables here.
   APP_DEBUG: true
-  APP_ENV: production
+  APP_ENV: local
   APP_KEY: base64:tG8vGM7xkKXlo7Pwra0oqgsbIneLYEiSDYqKJ6BejmI=
   APP_NAME: "Male-Fashion"
 
+  DB_DATABASE: malefashion
+  DB_USERNAME: root
+  DB_PASSWORD: password
+  DB_SOCKET: /cloudsql/cloud-computing-364304:asia-southeast2:mysql
+
   LOG_LEVEL: debug
+
+beta_settings:
+  cloud_sql_instances: "cloud-computing-364304:asia-southeast2:mysql"
