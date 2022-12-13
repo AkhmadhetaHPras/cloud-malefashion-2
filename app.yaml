@@ -20,7 +20,7 @@ resources:
 env_variables:
   # Put production environment variables here.
   APP_DEBUG: true
-  APP_ENV: production
+  APP_ENV: local
   APP_KEY: base64:tG8vGM7xkKXlo7Pwra0oqgsbIneLYEiSDYqKJ6BejmI=
   APP_NAME: "Male-Fashion"
 
