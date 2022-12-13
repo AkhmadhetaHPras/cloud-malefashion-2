@@ -15,6 +15,9 @@ RUN sh -c "wget http://getcomposer.org/composer.phar && chmod a+x composer.phar 
 RUN cd /app && \
     /usr/local/bin/composer install --ignore-platform-req=ext-gd
 
+RUN rm -f /app/storage/logs/* /app/public/storage && \
+    php /app/artisan storage:link
+
 RUN chown -R www-data: /app
 
 CMD sh /app/docker/startup.sh
