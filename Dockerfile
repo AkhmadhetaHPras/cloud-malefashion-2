@@ -1,63 +1,50 @@
-FROM ubuntu:22.04
+# Use an official PHP runtime as a base image
+FROM php:8.1-apache
 
-LABEL maintainer="Taylor Otwell"
+RUN apt-get update && \
+    apt-get install --yes --force-yes \
+    cron g++ gettext libicu-dev openssl \
+    libc-client-dev libkrb5-dev  \
+    libxml2-dev libfreetype6-dev \
+    libgd-dev libmcrypt-dev bzip2 \
+    libbz2-dev libtidy-dev libcurl4-openssl-dev \
+    libz-dev libmemcached-dev libxslt-dev git-core libpq-dev \
+    libzip4 libzip-dev libwebp-dev
 
-ARG WWWGROUP
-ARG NODE_VERSION=16
-ARG POSTGRES_VERSION=14
 
-WORKDIR /var/www/html
+# PHP Configuration
+RUN docker-php-ext-install bcmath bz2 calendar  dba exif gettext iconv intl  soap tidy xsl zip&&\
+    docker-php-ext-install mysqli pgsql pdo pdo_mysql pdo_pgsql  &&\
+    docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp &&\
+    docker-php-ext-install gd &&\
+    docker-php-ext-configure imap --with-kerberos --with-imap-ssl &&\
+    docker-php-ext-install imap &&\
+    docker-php-ext-configure hash --with-mhash &&\
+    pecl install xdebug && docker-php-ext-enable xdebug &&\
+    pecl install mongodb && docker-php-ext-enable mongodb &&\
+    pecl install redis && docker-php-ext-enable redis && \
+    curl -sS https://getcomposer.org/installer | php \
+            && mv composer.phar /usr/bin/composer
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ=UTC
+# Apache Configuration
+RUN a2enmod rewrite 
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# SSL
+RUN mv  /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf &&\
+    a2enmod ssl && \
+    a2ensite 000-default-ssl &&\
+    openssl req -subj '/CN=example.com/O=My Company Name LTD./C=US' -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem
 
-RUN apt-get update \
-    && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev python2 \
-    && mkdir -p ~/.gnupg \
-    && chmod 600 ~/.gnupg \
-    && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
-    && echo "keyserver hkp://keyserver.ubuntu.com:80" >> ~/.gnupg/dirmngr.conf \
-    && gpg --recv-key 0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c \
-    && gpg --export 0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c > /usr/share/keyrings/ppa_ondrej_php.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu jammy main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
-    && apt-get update \
-    && apt-get install -y php8.1-cli php8.1-dev \
-       php8.1-pgsql php8.1-sqlite3 php8.1-gd \
-       php8.1-curl \
-       php8.1-imap php8.1-mysql php8.1-mbstring \
-       php8.1-xml php8.1-zip php8.1-bcmath php8.1-soap \
-       php8.1-intl php8.1-readline \
-       php8.1-ldap \
-       php8.1-msgpack php8.1-igbinary php8.1-redis php8.1-swoole \
-       php8.1-memcached php8.1-pcov php8.1-xdebug \
-    && php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer \
-    && curl -sLS https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm \
-    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /usr/share/keyrings/yarn.gpg >/dev/null \
-    && echo "deb [signed-by=/usr/share/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
-    && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /usr/share/keyrings/pgdg.gpg >/dev/null \
-    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
-    && apt-get install -y yarn \
-    && apt-get install -y mysql-client \
-    && apt-get install -y postgresql-client-$POSTGRES_VERSION \
-    && apt-get -y autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+EXPOSE 80
+EXPOSE 443
 
-RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.1
+# Imagemagick : install fails on 8.0
+RUN apt-get install --yes --force-yes libmagickwand-dev libmagickcore-dev
+RUN yes '' | pecl install -f imagick &&\
+    docker-php-ext-enable imagick
 
-RUN groupadd --force -g $WWWGROUP sail
-RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 sail
+COPY create_vhost config-vhost start /usr/local/bin/
+COPY php.ini /usr/local/etc/php/
 
-COPY start-container /usr/local/bin/start-container
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY php.ini /etc/php/8.1/cli/conf.d/99-sail.ini
-RUN chmod +x /usr/local/bin/start-container
 
-EXPOSE 8000
-
-ENTRYPOINT ["start-container"]
+CMD ["start"]
